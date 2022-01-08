@@ -1,0 +1,14 @@
+# ignore_files
+
+.vscode/
+Projects/bk-hand-mic-tx/MDK-ARM/Listings/
+Projects/bk-hand-mic-tx/MDK-ARM/Objects/
+Projects/bk-hand-mic-tx/MDK-ARM/DebugConfig/
+Projects/bk-hand-mic-tx/MDK-ARM/Project.uvguix.*
+Projects/bk-hand-mic-tx/MDK-ARM/EventRecorderStub.*
+Projects/bk-hand-mic-tx/MDK-ARM/JLink*
+
+develop_lib/
+
+*.DS_Store/
+
