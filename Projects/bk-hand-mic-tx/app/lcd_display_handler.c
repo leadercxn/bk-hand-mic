@@ -52,7 +52,13 @@ static lcd_seg_cell_t m_seg_table[] = {
 static bool m_lcd_off = false;
 static bool m_old_lcd_off = false;
 
-static uint64_t old_ticks = 0;
+static uint64_t lcd_bk_old_ticks = 0;
+
+static uint16_t m_lcd_channel_freq = 6320;  // uint = 0.1 MHz
+static bool is_lcd_channel_freq_refresh = false;
+
+static uint8_t  m_battery_level = 3;
+static bool is_battery_level_refresh = false;
 
 /**
  * 相关IO配置
@@ -396,9 +402,9 @@ static void digital_special_show(lcd_part_e part , bool enable)
 /**
  * @brief 显示通道频率
  * 
- * @param [in] data 单位 百M
+ * @param [in] data 单位 0.1 MHz
  */
-static void channel_freq_lr_show(uint16_t hund_freq)
+static void channel_freq_show(uint16_t hund_freq)
 {
     uint8_t hundred = hund_freq / 1000;
     uint8_t decade = hund_freq % 1000 / 100;
@@ -412,8 +418,8 @@ static void channel_freq_lr_show(uint16_t hund_freq)
 
     digital_special_show(DIGITAL_T13, true);
 
-    digital_number_show(DIGITAL_5, unit);
-    digital_number_show(DIGITAL_6, point);
+    digital_number_show(DIGITAL_5, 0);
+    digital_number_show(DIGITAL_6, 0);
 }
 
 /**
@@ -439,7 +445,48 @@ static void channel_off_show(void)
     delay_ms(200);
 }
 
+/**
+ * @brief 清屏显示
+ */
+static void lcd_clear(void)
+{
+    ht162x_all_clean(&m_lcd_display_obj.ht162x);
+}
 
+/**
+ * @brief 显示电池电量level
+ */
+static int battery_level_show(uint8_t level)
+{
+    digital_special_show(DIGITAL_T4,true);
+
+    if(level > 0)
+    {
+        digital_special_show(DIGITAL_T1,true);
+    }
+    else
+    {
+        digital_special_show(DIGITAL_T1,false);
+    }
+
+    if(level > 1)
+    {
+        digital_special_show(DIGITAL_T2,true);
+    }
+    else
+    {
+        digital_special_show(DIGITAL_T2,false);
+    }
+
+    if(level > 2)
+    {
+        digital_special_show(DIGITAL_T3,true);
+    }
+    else
+    {
+        digital_special_show(DIGITAL_T3,false);
+    }
+}
 
 int lcd_display_init(void)
 {
@@ -450,22 +497,51 @@ int lcd_display_init(void)
     gpio_config(&m_lcd_display_obj.lcd_back_light_pin);
     gpio_output_set(&m_lcd_display_obj.lcd_back_light_pin, 1);
 
-	
-	digital_number_show(DIGITAL_1, 8);
-	digital_number_show(DIGITAL_2, 7);
-	digital_number_show(DIGITAL_3, 6);
-	digital_number_show(DIGITAL_4, 5);
-	digital_number_show(DIGITAL_5, 4);
-	digital_number_show(DIGITAL_6, 3);
     return 0;
 }
 
-
 void lcd_display_loop_task(void)
 {
-    if(mid_timer_ticks_get() - old_ticks > LCD_BACK_LED_CONTINUE_TIME)
+    /**
+     * 亮灯持续 LCD_BACK_LED_CONTINUE_TIME
+     */
+    if(mid_timer_ticks_get() - lcd_bk_old_ticks > LCD_BACK_LED_CONTINUE_TIME)
     {
         lcd_black_light_enable(false);
+    }
+
+    /**
+     * 开关机的切换
+     */
+    if(m_old_lcd_off != m_lcd_off)
+    {
+        if(m_lcd_off)
+        {
+            battery_level_show(m_battery_level);
+            channel_freq_show(m_lcd_channel_freq);
+
+            digital_special_show(DIGITAL_T9,true);
+            digital_special_show(DIGITAL_T5,true);
+        }
+        else
+        {
+            channel_off_show();
+            delay_ms(500);
+            lcd_clear();
+        }
+        m_old_lcd_off = m_lcd_off;
+    }
+
+    if(is_lcd_channel_freq_refresh)
+    {
+        channel_freq_show(m_lcd_channel_freq);
+        is_lcd_channel_freq_refresh = false;
+    }
+
+    if(is_battery_level_refresh)
+    {
+        battery_level_show(m_battery_level);
+        is_battery_level_refresh = false;
     }
 }
 
@@ -475,7 +551,7 @@ void lcd_black_light_enable(bool enable)
     {
         gpio_output_set(&m_lcd_display_obj.lcd_back_light_pin, 0);
 
-        old_ticks = mid_timer_ticks_get();
+        lcd_bk_old_ticks = mid_timer_ticks_get();
     }
     else
     {
@@ -483,12 +559,19 @@ void lcd_black_light_enable(bool enable)
     }
 }
 
-bool lcd_off_status_get(void)
-{
-    return m_lcd_off;
-}
-
 void lcd_off_status_set(bool enable)
 {
     m_lcd_off = enable;
+}
+
+void lcd_channel_freq_set(uint16_t freq)
+{
+    m_lcd_channel_freq = freq;
+    is_lcd_channel_freq_refresh = true;
+}
+
+void lcd_battery_level_set(uint8_t level)
+{
+    m_battery_level = level;
+    is_battery_level_refresh = true;
 }

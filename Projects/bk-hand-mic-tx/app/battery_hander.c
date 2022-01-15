@@ -5,6 +5,7 @@
 #define BATTERY_INTERVAL_MS 60 * 1000
 
 static uint16_t battery_mv = 0;
+static uint8_t  battery_mv_level = 0;
 
 void battery_loop_task(void)
 {
@@ -23,5 +24,27 @@ void battery_loop_task(void)
 uint16_t battery_mv_get(void)
 {
     return battery_mv;
+}
+
+uint8_t battery_mv_level_get(void)
+{
+    if(battery_mv > BATTERY_MV_LEVEL_3_MIN)
+    {
+        battery_mv_level = 3;
+    }
+    else if(battery_mv > BATTERY_MV_LEVEL_2_MIN)
+    {
+        battery_mv_level = 2;
+    }
+    else if(battery_mv > BATTERY_MV_LEVEL_1_MIN)
+    {
+        battery_mv_level = 1;
+    }
+    else
+    {
+        battery_mv_level = 0;
+    }
+
+    return battery_mv_level;
 }
 

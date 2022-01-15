@@ -14,23 +14,8 @@ typedef struct
 
 static bk953x_task_t m_bk953x_task = {
     .p_bk953x_object = &m_bk9531_obj,
-    .stage = BK_STAGE_INIT,
+    .stage = BK_STATE_IDLE,
 };
-
-/**
- * @warning 复位要适当的延时，别太快
- */
-static void bk953x_hw_reset(void)
-{
-    gpio_config(&m_bk9531_rst);
-
-    gpio_output_set(&m_bk9531_rst, 1);
-    delay_ms(100);
-    gpio_output_set(&m_bk9531_rst, 0);
-    delay_ms(100);
-    gpio_output_set(&m_bk9531_rst, 1);
-    delay_ms(500);
-}
 
 int bk9531_init(void)
 {
@@ -44,8 +29,6 @@ int bk9531_init(void)
     m_bk9531_rst.gpio_dir = GPIO_DIR_OUTPUR;
     m_bk9531_rst.gpio_pin = BK9531_CE_PIN;
 
-    m_bk9531_obj.hw_reset_handler = bk953x_hw_reset;
-
 #ifdef FT32
     m_bk9531_obj.mid_bk953x_object.virt_i2c_object.sda_port_periph_clk = VIRT1_SDA_GPIO_CLK;
     m_bk9531_obj.mid_bk953x_object.virt_i2c_object.scl_port_periph_clk = VIRT1_SCL_GPIO_CLK;
@@ -55,13 +38,9 @@ int bk9531_init(void)
     m_bk9531_obj.mid_bk953x_object.virt_i2c_object.scl_gpio_pin = VIRT1_SCL_PIN;
 #endif
 
+    m_bk9531_obj.p_rst_gpio = (void *)&m_bk9531_rst;
+
     bk9531_res_init(&m_bk9531_obj);
-
-    m_bk9531_obj.hw_reset_handler();
-
-    bk9531_chip_id_get(&m_bk9531_obj);
-
-    trace_debug("9531_chip_id = 0x%08x \n\r",m_bk9531_obj.chip_id);
 
     return err_code;
 }
@@ -72,20 +51,39 @@ static void bk953x_stage_task_run(bk953x_task_t *p_task)
 
     static uint64_t old_ticks = 0;
     static uint64_t mic_old_ticks = 0;
+    gpio_object_t *p_rst_gpio = (gpio_object_t *)p_task->p_bk953x_object->p_rst_gpio;
+
     uint32_t mic_rssi = 0;
+
+    static uint8_t usr_data = 0x01;
 
     switch(p_task->stage)
     {
         case BK_STAGE_INIT:
+            /**
+             * 硬件复位,复位要适当的延时，别太快
+             */
+            gpio_config(p_rst_gpio);
+
+            gpio_output_set(p_rst_gpio, 1);
+            delay_ms(100);
+            gpio_output_set(p_rst_gpio, 0);
+            delay_ms(100);
+            gpio_output_set(p_rst_gpio, 1);
+            delay_ms(100);
+
+            bk9531_chip_id_get(p_task->p_bk953x_object);
+            trace_debug("9531_chip_id = 0x%08x \n\r",m_bk9531_obj.chip_id);
+
+            /**
+             * 寄存器配置
+             */
             err_code = bk9531_config_init(p_task->p_bk953x_object);
             if(err_code == 0)
             {
-                trace_debug("bk9531_config_init success\n\r");
+                trace_debug("BK_STAGE_INIT done, go to BK_STAGE_NORMAL\n\r");
+                p_task->stage = BK_STAGE_NORMAL;
             }
-
-            bk9531_reg_printf(p_task->p_bk953x_object);
-
-            p_task->stage++;
             break;
 
         case BK_STAGE_NORMAL:
@@ -93,13 +91,17 @@ static void bk953x_stage_task_run(bk953x_task_t *p_task)
                 if(mid_timer_ticks_get() - old_ticks > 5000)
                 {
                     old_ticks = mid_timer_ticks_get();
-                    err_code = bk9531_tx_spec_data_set(p_task->p_bk953x_object, 0x12);
+                    err_code = bk9531_tx_spec_data_set(p_task->p_bk953x_object, usr_data);
                     if(!err_code)
                     {
-                        trace_debug("bk9531_tx_spec_data_set success\n\r");
+                        trace_debug("bk9531_tx_spec_data_set success usr_data = 0x%02x\n\r",usr_data);
+                        usr_data++;
                     }
                 }
 
+/**
+ * 读取麦克风的音量大小
+ */
 #if 0
                 if(mid_timer_ticks_get() - mic_old_ticks > 1000)
                 {
@@ -118,8 +120,11 @@ static void bk953x_stage_task_run(bk953x_task_t *p_task)
 
             break;
 
-        case BK_STAGE_POWER_OFF:
-
+        case BK_STATE_IDLE:
+            /**
+             * IDLE 状态下，关闭射频
+             */
+            gpio_output_set(p_rst_gpio, 0);
             break;
 
         default:
@@ -132,16 +137,9 @@ void bk953x_loop_task(void)
     bk953x_stage_task_run(&m_bk953x_task);
 }
 
-void bk953x_task_stage_set(bk953x_lr_e lr, bk953x_task_stage_e stage)
+void bk953x_task_stage_set(bk953x_task_stage_e stage)
 {
-    if(lr == BK953X_L)
-    {
-        m_bk953x_task.stage = stage;
-    }
-    else
-    {
-        m_bk953x_task.stage = stage;
-    }
+    m_bk953x_task.stage = stage;
 }
 
 /**

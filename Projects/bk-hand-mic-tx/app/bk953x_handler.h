@@ -9,16 +9,10 @@
 
 typedef enum
 {
-    BK953X_L,
-    BK953X_R,
-} bk953x_lr_e;
-
-typedef enum
-{
     BK_STAGE_INIT,
     BK_STAGE_NORMAL,
     BK_STAGE_SEARCHING,
-    BK_STAGE_POWER_OFF,
+    BK_STATE_IDLE,
     BK_STAGE_MAX,
 } bk953x_task_stage_e;
 
@@ -38,7 +32,7 @@ int bk9531_init(void);
 
 void bk953x_loop_task(void);
 
-void bk953x_task_stage_set(bk953x_lr_e lr, bk953x_task_stage_e stage);
+void bk953x_task_stage_set(bk953x_task_stage_e stage);
 
 
 #endif

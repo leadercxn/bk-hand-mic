@@ -5,7 +5,7 @@
 #include "board_config.h"
 #include "button_handler.h"
 
-#define BUTTON_LONG_TIME_MS    2000
+#define BUTTON_LONG_TIME_MS    1500
 
 static button_event_handler_t m_button_event_handler = NULL;
 static bool m_is_button_start = false;
@@ -42,7 +42,7 @@ void button_loop_task(void)
     if(key_value == 0)
     {
         /* 简单的滤波 */
-        delay_ms(10);
+        delay_ms(5);
 
         gpio_input_get(&m_power_sw_key, &key_value);
 

@@ -41,5 +41,8 @@ int lcd_display_init(void);
 void lcd_display_loop_task(void);
 
 void lcd_black_light_enable(bool enable);
+void lcd_off_status_set(bool enable);
+void lcd_channel_freq_set(uint16_t freq);
+void lcd_battery_level_set(uint8_t level);
 
 #endif

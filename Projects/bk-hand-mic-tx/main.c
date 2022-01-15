@@ -18,7 +18,11 @@ static gpio_object_t   m_power_on_gpio =
     .gpio_pin = POWER_ON_PIN,
 };
 
+/**
+ * 系统开机flag
+ */
 static bool m_sys_power_on = false;
+static uint64_t m_per_battery_sample_ticks = 0;
 
 static char * mp_button[BUTTON_EVENT_MAX] = {
     "BUTTON_EVENT_PUSH",
@@ -77,19 +81,24 @@ static void button_handler(button_event_e event)
           break;
 
         case BUTTON_EVENT_LONG_PUSH:
-            if(m_sys_power_on)
-            {
-                m_sys_power_on = false;
-                trace_debug("system power off\n\r");
-            }
-            else
-            {
-                m_sys_power_on = true;
-                trace_debug("system power on\n\r");
-            }
+          if(m_sys_power_on)
+          {
+              m_sys_power_on = false;
+              trace_debug("system power off\n\r");
 
-            gpio_output_set(&m_power_on_gpio, m_sys_power_on);
-            lcd_black_light_enable(m_sys_power_on);
+              bk953x_task_stage_set(BK_STATE_IDLE);
+          }
+          else
+          {
+              m_sys_power_on = true;
+              trace_debug("system power on\n\r");
+
+              bk953x_task_stage_set(BK_STAGE_INIT);
+          }
+
+          gpio_output_set(&m_power_on_gpio, m_sys_power_on);
+          lcd_black_light_enable(m_sys_power_on);
+          lcd_off_status_set(m_sys_power_on);
           break;
 
         default:
@@ -108,6 +117,19 @@ static void app_evt_schedule(void * p_event_data)
  */
 static void host_loop_task(void)
 {
+    /**
+     * 一分钟采样一次电池电压并更新LCD
+     */
+    if((mid_timer_ticks_get() - m_per_battery_sample_ticks) > 60000)
+    {
+        m_per_battery_sample_ticks = mid_timer_ticks_get();
+
+        lcd_battery_level_set( battery_mv_level_get() );
+    }
+
+    /**
+     * 
+     */
 
 }
 
@@ -138,6 +160,9 @@ int main(void)
   gpio_config(&m_power_on_gpio);
   button_hw_init(button_handler);
 
+  /**
+   * 资源申请
+   */
   bk9531_init();
 
   ir_rx_init();
@@ -156,7 +181,6 @@ int main(void)
     battery_loop_task();
     host_loop_task();
   }
-
 }
 
 #ifdef  USE_FULL_ASSERT
