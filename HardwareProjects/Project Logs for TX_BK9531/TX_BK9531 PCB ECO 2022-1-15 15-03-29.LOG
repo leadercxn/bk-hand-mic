@@ -1,0 +1,9 @@
+Added Component: Designator=U1(MikroBus)
+Added Pin To Net: NetName=SDA Pin=U1-3
+Added Pin To Net: NetName=SCK Pin=U1-4
+Added Pin To Net: NetName=MICN Pin=U1-7
+Added Pin To Net: NetName=MICP Pin=U1-8
+Added Pin To Net: NetName=CE Pin=U1-9
+Added Pin To Net: NetName=VCC2.8 Pin=U1-15
+Added Pin To Net: NetName=GND Pin=U1-16
+Added Member To Class: ClassName=main Member=Component U1 MikroBus
