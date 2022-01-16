@@ -113,14 +113,25 @@ static void app_evt_schedule(void * p_event_data)
 }
 
 /**
- * @brief host-task
+ * @brief host-task 主任务，负责各个task之间的交互
  */
 static void host_loop_task(void)
 {
+    uint8_t ir_rx_data_len = 0;
+    uint8_t ir_rx_data[16] = {0};
+
+    /**
+     * 关机状态下不执行
+     */
+    if(!m_sys_power_on)
+    {
+        return;
+    }
+
     /**
      * 一分钟采样一次电池电压并更新LCD
      */
-    if((mid_timer_ticks_get() - m_per_battery_sample_ticks) > 60000)
+    if(((mid_timer_ticks_get() - m_per_battery_sample_ticks) > 60000) || (m_per_battery_sample_ticks == 0))
     {
         m_per_battery_sample_ticks = mid_timer_ticks_get();
 
@@ -128,15 +139,18 @@ static void host_loop_task(void)
     }
 
     /**
-     * 
+     * 红外解码
      */
-
+    ir_rx_data_len = ir_rx_decode_result_get(ir_rx_data);
+    if(ir_rx_data_len)
+    {
+        trace_debug("host_loop_task ir rx data:");
+        trace_dump_d(ir_rx_data, ir_rx_data_len);
+    }
 }
 
 int main(void)
 {
-  int err_code = 0;
-
   trace_init();
 
   /*greeting*/
@@ -178,7 +192,6 @@ int main(void)
     bk953x_loop_task();
     button_loop_task();
     lcd_display_loop_task();
-    battery_loop_task();
     host_loop_task();
   }
 }

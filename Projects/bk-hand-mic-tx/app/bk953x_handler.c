@@ -53,7 +53,7 @@ static void bk953x_stage_task_run(bk953x_task_t *p_task)
     static uint64_t mic_old_ticks = 0;
     gpio_object_t *p_rst_gpio = (gpio_object_t *)p_task->p_bk953x_object->p_rst_gpio;
 
-    uint32_t mic_rssi = 0;
+    uint8_t mic_rssi = 0;
 
     static uint8_t usr_data = 0x01;
 
@@ -103,13 +103,13 @@ static void bk953x_stage_task_run(bk953x_task_t *p_task)
  * 读取麦克风的音量大小
  */
 #if 0
-                if(mid_timer_ticks_get() - mic_old_ticks > 1000)
+                if(mid_timer_ticks_get() - mic_old_ticks > 100)
                 {
                     mic_old_ticks = mid_timer_ticks_get();
-                    err_code = bk953x_tx_mic_rssi_get(p_task->p_bk953x_object, &mic_rssi);
+                    err_code = bk9531_tx_mic_rssi_get(p_task->p_bk953x_object, &mic_rssi);
                     if(!err_code)
                     {
-                        trace_debug("0X3F get regvalue, mic_rssi 0x%08x\n\r",mic_rssi);
+                        trace_debug("mic_rssi 0x%02x\n\r",mic_rssi);
                     }
                 }
 #endif

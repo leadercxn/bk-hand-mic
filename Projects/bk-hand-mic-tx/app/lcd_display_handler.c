@@ -49,7 +49,7 @@ static lcd_seg_cell_t m_seg_table[] = {
 };
 
 
-static bool m_lcd_off = false;
+static bool m_lcd_on = false;
 static bool m_old_lcd_off = false;
 
 static uint64_t lcd_bk_old_ticks = 0;
@@ -57,7 +57,7 @@ static uint64_t lcd_bk_old_ticks = 0;
 static uint16_t m_lcd_channel_freq = 6320;  // uint = 0.1 MHz
 static bool is_lcd_channel_freq_refresh = false;
 
-static uint8_t  m_battery_level = 3;
+static uint8_t  m_battery_level = 0;
 static bool is_battery_level_refresh = false;
 
 /**
@@ -513,9 +513,9 @@ void lcd_display_loop_task(void)
     /**
      * 开关机的切换
      */
-    if(m_old_lcd_off != m_lcd_off)
+    if(m_old_lcd_off != m_lcd_on)
     {
-        if(m_lcd_off)
+        if(m_lcd_on)
         {
             battery_level_show(m_battery_level);
             channel_freq_show(m_lcd_channel_freq);
@@ -529,7 +529,15 @@ void lcd_display_loop_task(void)
             delay_ms(500);
             lcd_clear();
         }
-        m_old_lcd_off = m_lcd_off;
+        m_old_lcd_off = m_lcd_on;
+    }
+
+    /**
+     * 关机后，不更新显示
+     */
+    if(!m_lcd_on)
+    {
+        return;
     }
 
     if(is_lcd_channel_freq_refresh)
@@ -554,14 +562,14 @@ void lcd_black_light_enable(bool enable)
         lcd_bk_old_ticks = mid_timer_ticks_get();
     }
     else
-    {
+   {
         gpio_output_set(&m_lcd_display_obj.lcd_back_light_pin, 1);
     }
 }
 
 void lcd_off_status_set(bool enable)
 {
-    m_lcd_off = enable;
+    m_lcd_on = enable;
 }
 
 void lcd_channel_freq_set(uint16_t freq)
