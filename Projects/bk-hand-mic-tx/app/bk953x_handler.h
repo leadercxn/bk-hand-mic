@@ -32,7 +32,10 @@ int bk9531_init(void);
 
 void bk953x_loop_task(void);
 
+void bk953x_ch_index_set(uint8_t ch_index, uint16_t freq);
+
 void bk953x_task_stage_set(bk953x_task_stage_e stage);
 
+void bk953x_user_spec_data_set(uint8_t user_data);
 
 #endif

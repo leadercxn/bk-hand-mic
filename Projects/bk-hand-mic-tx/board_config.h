@@ -103,6 +103,14 @@
 #define ADC_SAMPLETIME_CYCLE            ADC_SampleTime_239_5Cycles
 #define ADC_CONTINUOUS_CONV_MODE        DISABLE
 
+/* FLASH */
+#define FLASH_ADDRESS_MAX               0x8007FFF
+
+#define FLASH_APP_PARAM_SAVE_ADDR       0x8007800           //用户保存数据片区
+#define FLASH_APP_PARAM_LEN_MAX         0x800
+
+#define FLASH_PAGE_SIZE                 0x00000200
+
 #endif
 
 

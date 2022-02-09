@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>FT32F030x6,USE_STDPERIPH_DRIVER,USE_FT32F030XX_EVAL,USE_DEFAULT_TIMEOUT_CALLBACK,FT32,DEBUG,</Define>
               <Undefine></Undefine>
-              <IncludePath>..\;..\..\..\Libraries\CMSIS\Device\FT\FT32F0xx\Include;..\..\..\Libraries\CMSIS\Include;..\..\..\Libraries\FT32F0xx_StdPeriph_Driver\inc;..\..\..\Libraries\FT32F0xx_CPAL_Driver\inc;..\..\..\Utilities\FT32_EVAL\Common;..\..\..\Utilities\FT32_EVAL\FT32F030xx_EVAL;..\..\..\develop_lib\ft_lib\gpio;..\..\..\develop_lib\ft_lib\systick;..\..\..\develop_lib\ft_lib\timer;..\..\..\develop_lib\ft_lib\usart;..\..\..\develop_lib\middle_api\delay;..\..\..\develop_lib\middle_api\mid_gpio;..\..\..\develop_lib\middle_api\mid_systick;..\..\..\develop_lib\middle_api\mid_timer;..\..\..\develop_lib\middle_api\trace;..\..\..\develop_lib\middle_api\queue;..\..\..\develop_lib\ft_lib;..\..\..\develop_lib\middle_api;..\..\..\develop_lib\third_lib;..\..\..\develop_lib\third_lib\app_timer;..\..\..\develop_lib\third_lib\crc32;..\..\..\develop_lib;..\..\..\develop_lib\ft_lib\i2c;..\..\..\develop_lib\ft_lib\flash;..\..\..\develop_lib\ft_lib\timer_pwm;..\..\..\develop_lib\ft_lib\exit;..\..\..\develop_lib\ft_lib\adc;..\..\..\develop_lib\middle_api\tft_8080;..\..\..\develop_lib\middle_api\mid_bk953x;..\..\..\develop_lib\middle_api\mid_flash;..\..\..\develop_lib\middle_api\adc;..\..\..\develop_lib\middle_api\ir;..\..\..\develop_lib\middle_api\pwm;..\..\..\develop_lib\hardware;..\..\..\develop_lib\hardware\bk953x;..\..\..\develop_lib\hardware\ht1621;..\..\..\develop_lib\hardware\st7789;..\..\..\develop_lib\third_lib\app_scheduler;..\app</IncludePath>
+              <IncludePath>..\;..\..\..\Libraries\CMSIS\Device\FT\FT32F0xx\Include;..\..\..\Libraries\CMSIS\Include;..\..\..\Libraries\FT32F0xx_StdPeriph_Driver\inc;..\..\..\Libraries\FT32F0xx_CPAL_Driver\inc;..\..\..\Utilities\FT32_EVAL\Common;..\..\..\Utilities\FT32_EVAL\FT32F030xx_EVAL;..\..\..\develop_lib\ft_lib\gpio;..\..\..\develop_lib\ft_lib\systick;..\..\..\develop_lib\ft_lib\timer;..\..\..\develop_lib\ft_lib\usart;..\..\..\develop_lib\middle_api\delay;..\..\..\develop_lib\middle_api\mid_gpio;..\..\..\develop_lib\middle_api\mid_systick;..\..\..\develop_lib\middle_api\mid_timer;..\..\..\develop_lib\middle_api\trace;..\..\..\develop_lib\middle_api\queue;..\..\..\develop_lib\ft_lib;..\..\..\develop_lib\middle_api;..\..\..\develop_lib\third_lib;..\..\..\develop_lib\third_lib\app_timer;..\..\..\develop_lib\third_lib\crc32;..\..\..\develop_lib;..\..\..\develop_lib\ft_lib\i2c;..\..\..\develop_lib\ft_lib\flash;..\..\..\develop_lib\ft_lib\timer_pwm;..\..\..\develop_lib\ft_lib\exit;..\..\..\develop_lib\ft_lib\adc;..\..\..\develop_lib\middle_api\tft_8080;..\..\..\develop_lib\middle_api\mid_bk953x;..\..\..\develop_lib\middle_api\mid_flash;..\..\..\develop_lib\middle_api\adc;..\..\..\develop_lib\middle_api\ir;..\..\..\develop_lib\middle_api\pwm;..\..\..\develop_lib\hardware;..\..\..\develop_lib\hardware\bk953x;..\..\..\develop_lib\hardware\ht1621;..\..\..\develop_lib\hardware\st7789;..\..\..\develop_lib\third_lib\app_scheduler;..\app;..\..\..\develop_lib\middle_api\mid_flash;..\..\..\develop_lib\ft_lib\flash</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -427,6 +427,11 @@
               <FileName>battery_hander.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\app\battery_hander.c</FilePath>
+            </File>
+            <File>
+              <FileName>flash_handler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\flash_handler.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -578,6 +583,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\develop_lib\ft_lib\adc\ft_adc.c</FilePath>
             </File>
+            <File>
+              <FileName>ft_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\develop_lib\ft_lib\flash\ft_flash.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -622,6 +632,11 @@
               <FileName>mid_adc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\develop_lib\middle_api\adc\mid_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>mid_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\develop_lib\middle_api\mid_flash\mid_flash.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -1,10 +1,17 @@
 #include "stdio.h"
+#include "stdbool.h"
 #include "board_config.h"
+#include "flash_handler.h"
 #include "bk953x_handler.h"
 
 static bk953x_object_t m_bk9531_obj;
 
 static gpio_object_t   m_bk9531_rst;
+
+static bool m_is_freq_update = false;
+
+static uint8_t m_freq_ch = 1;
+static uint16_t m_freq = 6320;
 
 typedef struct
 {
@@ -45,17 +52,60 @@ int bk9531_init(void)
     return err_code;
 }
 
+static uint32_t ch_convert_to_regval(uint8_t ch, region_band_e region_band, band_type_e band_type)
+{
+    uint32_t regval = BK9531_FREQ_632_MHZ;
+
+    switch(region_band)
+    {
+        case REGION_BAND_DEFAULT:       //默认地区
+
+            #define U_BAND_CH_101_FREQ   6600
+            #define U_BAND_CH_1_FREQ     6320
+
+            if(band_type == BAND_TYPE_V)  //V段
+            {
+
+            }
+            else                          //U段
+            {
+                if(ch > 100)
+                {
+                    regval = BK9531_FREQ_660_MHZ + BK9531_FREQ_0_3_MHZ * (ch - 101);
+                }
+                else
+                {
+                    regval = BK9531_FREQ_632_MHZ + BK9531_FREQ_0_3_MHZ * (ch - 1);
+                }
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    trace_debug("ch_convert_to_regval return 0x%08x\n\r",regval);
+    return regval;
+}
+
+
 static void bk953x_stage_task_run(bk953x_task_t *p_task)
 {
     int err_code = 0;
 
-    static uint64_t old_ticks = 0;
     static uint64_t mic_old_ticks = 0;
     gpio_object_t *p_rst_gpio = (gpio_object_t *)p_task->p_bk953x_object->p_rst_gpio;
+    uint32_t id = 0x00000000;
+    static uint32_t lo_amp_temp = 0;
+
+    freq_chan_object_t freq_chan = {
+        .chan_index = 1,
+        .freq = 6320,
+        .reg_value = 0x4D260000,
+    };
+     
 
     uint8_t mic_rssi = 0;
-
-    static uint8_t usr_data = 0x01;
 
     switch(p_task->stage)
     {
@@ -84,20 +134,51 @@ static void bk953x_stage_task_run(bk953x_task_t *p_task)
                 trace_debug("BK_STAGE_INIT done, go to BK_STAGE_NORMAL\n\r");
                 p_task->stage = BK_STAGE_NORMAL;
             }
+
+            freq_chan.reg_value = ch_convert_to_regval(m_freq_ch, g_app_param.region_band, g_app_param.band_type);
+
+            freq_chan.band_type = g_app_param.band_type;
+            freq_chan.chan_index = m_freq_ch;
+            freq_chan.freq = m_freq;
+
+            bk9531_tx_freq_chan_set(p_task->p_bk953x_object, &freq_chan);
+
+//            bk9531_tx_id_set(p_task->p_bk953x_object,id);
+
+//            mid_bk953x_read_one_reg(&p_task->p_bk953x_object->mid_bk953x_object, BK953X_DEVICE_ID, 0x72, &lo_amp_temp);
+//            lo_amp_temp &= 0xff;
             break;
 
         case BK_STAGE_NORMAL:
 
-                if(mid_timer_ticks_get() - old_ticks > 5000)
+            if(m_is_freq_update)
+            {
+                m_is_freq_update = false;
+
+                freq_chan.reg_value = ch_convert_to_regval(m_freq_ch, g_app_param.region_band, g_app_param.band_type);
+
+                freq_chan.band_type = g_app_param.band_type;
+                freq_chan.chan_index = m_freq_ch;
+                freq_chan.freq = m_freq;
+
+                bk9531_tx_freq_chan_set(p_task->p_bk953x_object, &freq_chan);
+            }
+/**
+ * 防止出现单载波，然而还是没啥用
+ */
+#if 0
+                mid_bk953x_read_one_reg(&p_task->p_bk953x_object->mid_bk953x_object, BK953X_DEVICE_ID, 0x72, &value);
+                value &= 0xff;
+                if(value != lo_amp_temp)
                 {
-                    old_ticks = mid_timer_ticks_get();
-                    err_code = bk9531_tx_spec_data_set(p_task->p_bk953x_object, usr_data);
-                    if(!err_code)
-                    {
-                        trace_debug("bk9531_tx_spec_data_set success usr_data = 0x%02x\n\r",usr_data);
-                        usr_data++;
-                    }
+                    trace_debug("single RF!\n\r");
+                    bk9531_tx_trigger(p_task->p_bk953x_object);
+                    delay_ms(5);
+
+                    mid_bk953x_read_one_reg(&p_task->p_bk953x_object->mid_bk953x_object, BK953X_DEVICE_ID, 0x72, &lo_amp_temp);
+                    lo_amp_temp &= 0xff;
                 }
+#endif
 
 /**
  * 读取麦克风的音量大小
@@ -142,12 +223,25 @@ void bk953x_task_stage_set(bk953x_task_stage_e stage)
     m_bk953x_task.stage = stage;
 }
 
+void bk953x_ch_index_set(uint8_t ch_index, uint16_t freq)
+{
+    m_is_freq_update = true;
+    m_freq_ch = ch_index;
+    m_freq = freq;
+}
+
 /**
  * @brief 设置通道序号来获取对应寄存器的值
  */
-int bk953x_ch_index_set(uint16_t chan_index)
+int bk953x_ch_index_search(uint16_t chan_index)
 {
     freq_chan_object_t freq_chan_obj;
 
     freq_chan_obj.chan_index = chan_index;
 }
+
+void bk953x_user_spec_data_set(uint8_t user_data)
+{
+    bk9531_tx_spec_data_set(m_bk953x_task.p_bk953x_object, user_data);
+}
+
